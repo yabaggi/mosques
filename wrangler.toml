@@ -5,11 +5,11 @@ compatibility_date = "2024-02-28"
 [vars]
 ENVIRONMENT = "development"
 
+
+
 [[d1_databases]]
 binding = "DB"
-database_name = "mosques_db"
-database_id = ""
+database_name = "mosquesdb"
+database_id = "a775b65a-62ad-4439-8e89-8db072cbd01b"
 
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "mosques_r2"
+
