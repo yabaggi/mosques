@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr" id="html-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -491,6 +491,50 @@
       display: flex; align-items: center; justify-content: center;
     }
 
+
+    /* ─── RTL / Arabic Support ─── */
+    [dir="rtl"] body { font-family: 'Amiri', serif; }
+    [dir="rtl"] .topbar-logo { font-size: 1.5rem; }
+    [dir="rtl"] .search-input { padding: 12px 44px 12px 16px; text-align: right; }
+    [dir="rtl"] .search-icon { left: auto; right: 30px; }
+    [dir="rtl"] .back-btn { flex-direction: row-reverse; }
+    [dir="rtl"] .compose-footer { flex-direction: row-reverse; }
+    [dir="rtl"] .event-item { flex-direction: row-reverse; }
+    [dir="rtl"] .info-chip { text-align: right; }
+    [dir="rtl"] .message-author { text-align: right; }
+    [dir="rtl"] .message-text { text-align: right; direction: rtl; }
+    [dir="rtl"] .section-label { text-align: right; letter-spacing: 0; }
+    [dir="rtl"] .mosque-card-meta { flex-direction: row-reverse; }
+    [dir="rtl"] .compose-box { flex-direction: row-reverse; }
+    [dir="rtl"] .modal-sheet { text-align: right; }
+    [dir="rtl"] .compose-input { text-align: right; direction: rtl; }
+    [dir="rtl"] .name-input { text-align: right; }
+    [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3 { font-family: 'Amiri', serif; }
+    [dir="rtl"] .nav-item { font-family: 'Amiri', serif; font-size: 0.75rem; letter-spacing: 0; text-transform: none; }
+    [dir="rtl"] .tag { font-family: 'Amiri', serif; letter-spacing: 0; }
+    [dir="rtl"] .btn { font-family: 'Amiri', serif; }
+    [dir="rtl"] .hero-overlay { text-align: right; }
+    [dir="rtl"] .detail-section p { text-align: right; direction: rtl; }
+    [dir="rtl"] .discuss-header { text-align: right; }
+    [dir="rtl"] .map-toggle-row { flex-direction: row-reverse; }
+
+    /* Language toggle button */
+    .lang-btn {
+      border: 1.5px solid var(--border);
+      background: white;
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-family: 'Amiri', serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--teal);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      line-height: 1.6;
+    }
+    .lang-btn:hover { background: var(--sand); border-color: var(--teal); }
+
     @media (min-width: 480px) {
       .grid-2 { grid-template-columns: 1fr 1fr; }
     }
@@ -504,7 +548,8 @@
 
   <!-- ─── TOP BAR ─── -->
   <header class="topbar" id="topbar">
-    <div class="topbar-logo">مسجد <span>Masjid</span></div>
+    <div class="topbar-logo">مسجد <span data-i18n="appName">Masjid</span></div>
+    <button class="lang-btn" id="lang-toggle-btn" onclick="toggleLanguage()">العربية</button>
     <button class="icon-btn" id="add-mosque-btn" title="Add Mosque" onclick="showAddMosqueModal()">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
@@ -524,11 +569,11 @@
     <div class="map-toggle-row">
       <button class="toggle-btn active" id="btn-list" onclick="switchView('list')">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        List
+        <span data-i18n="list">List</span>
       </button>
       <button class="toggle-btn" id="btn-map" onclick="switchView('map')">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:4px"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-        Map
+        <span data-i18n="map">Map</span>
       </button>
     </div>
 
@@ -548,7 +593,7 @@
     <div class="topbar" style="position:relative;padding:10px 16px;">
       <button class="back-btn" onclick="goBack()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        All Mosques
+        <span data-i18n="allMosques">All Mosques</span>
       </button>
       <div style="flex:1"></div>
       <button class="btn btn-gold btn-sm" id="contribute-btn">
@@ -566,17 +611,17 @@
   <div class="screen main-content" id="screen-community">
     <div class="discuss-header">
       <div class="arabic-ornament" style="opacity:0.2;color:white;margin-bottom:8px;">﷽</div>
-      <h2>Community Hub</h2>
-      <p>Global discussion for the Muslim community</p>
+      <h2 data-i18n="communityHub">Community Hub</h2>
+      <p data-i18n="communitySubtitle">Global discussion for the Muslim community</p>
     </div>
 
     <div class="compose-box">
       <div class="avatar" id="user-avatar">?</div>
       <div class="compose-inner">
-        <textarea class="compose-input" id="compose-message" placeholder="Share something with the community…" rows="3"></textarea>
+        <textarea class="compose-input" id="compose-message" placeholder="" data-i18n-placeholder="composePlaceholder" rows="3"></textarea>
         <div class="compose-footer">
-          <input class="name-input" id="compose-author" type="text" placeholder="Your name" maxlength="50" oninput="updateAvatar()" />
-          <button class="btn btn-primary btn-sm" onclick="postMessage()">Post</button>
+          <input class="name-input" id="compose-author" type="text" placeholder="" data-i18n-placeholder="yourName" maxlength="50" oninput="updateAvatar()" />
+          <button class="btn btn-primary btn-sm" onclick="postMessage()" data-i18n="post">Post</button>
         </div>
       </div>
     </div>
@@ -585,7 +630,7 @@
       <div class="loading-dots"><span></span><span></span><span></span></div>
     </div>
     <button class="load-more-btn hidden" id="load-more-btn" onclick="loadMoreMessages()">
-      Load more messages
+      <span data-i18n="loadMore">Load more messages</span>
     </button>
   </div>
 
@@ -595,13 +640,13 @@
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
-      Home
+      <span data-i18n="home">Home</span>
     </button>
     <button class="nav-item" id="nav-community" onclick="navigate('community')">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      Community
+      <span data-i18n="community">Community</span>
     </button>
   </nav>
 </div>
@@ -610,15 +655,15 @@
 <div class="modal-overlay" id="upload-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <h3 class="modal-title">Contribute a Photo</h3>
-    <p class="text-sm text-muted" style="margin-bottom:16px;">Photos are automatically compressed for fast loading.</p>
+    <h3 class="modal-title" data-i18n="contributePhoto">Contribute a Photo</h3>
+    <p class="text-sm text-muted" style="margin-bottom:16px;" data-i18n="photoHint">Photos are automatically compressed for fast loading.</p>
     <div class="upload-zone" id="upload-zone">
-      <input type="file" accept="image/*" capture="environment" id="file-input" onchange="handleFileSelect(event)" />
+      <input type="file" accept="image/*" id="file-input" onchange="handleFileSelect(event)" />
       <img class="upload-preview" id="upload-preview" alt="Preview" />
       <div id="upload-placeholder">
         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--gold);margin:0 auto 12px;display:block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <div style="font-weight:600;margin-bottom:4px;">Tap to select photo</div>
-        <div class="text-sm text-muted">or drag and drop here</div>
+        <div style="font-weight:600;margin-bottom:4px;" data-i18n="tapToSelect">Tap to select photo</div>
+        <div class="text-sm text-muted" data-i18n="dragDrop">or drag and drop here</div>
       </div>
     </div>
     <div class="upload-progress" id="upload-progress">
@@ -626,7 +671,7 @@
     </div>
     <div style="display:flex;gap:10px;margin-top:16px;">
       <button class="btn btn-outline w-full" onclick="closeUploadModal()">Cancel</button>
-      <button class="btn btn-primary w-full" id="upload-submit-btn" onclick="submitUpload()" disabled>Upload Photo</button>
+      <button class="btn btn-primary w-full" id="upload-submit-btn" onclick="submitUpload()" disabled data-i18n="uploadPhoto">Upload Photo</button>
     </div>
   </div>
 </div>
@@ -635,38 +680,38 @@
 <div class="modal-overlay" id="mosque-modal">
   <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
-    <h3 class="modal-title">Add a Mosque</h3>
+    <h3 class="modal-title" data-i18n="addMosque">Add a Mosque</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Mosque Name *</label>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="mosqueName">Mosque Name *</label>
         <input type="text" id="m-name" class="name-input w-full" placeholder="Al-Masjid al-Haram" style="padding:10px 12px;" />
       </div>
       <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Description</label>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="description">Description</label>
         <textarea id="m-desc" class="compose-input" placeholder="Brief description…" rows="2" style="min-height:60px;"></textarea>
       </div>
       <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Info / About</label>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="infoAbout">Info / About</label>
         <textarea id="m-info" class="compose-input" placeholder="Details, history, services…" rows="3" style="min-height:80px;"></textarea>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div>
-          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Latitude</label>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="latitude">Latitude</label>
           <input type="number" step="any" id="m-lat" class="name-input w-full" placeholder="21.4225" style="padding:10px 12px;" />
         </div>
         <div>
-          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Longitude</label>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="longitude">Longitude</label>
           <input type="number" step="any" id="m-lng" class="name-input w-full" placeholder="39.8262" style="padding:10px 12px;" />
         </div>
       </div>
       <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Year Constructed</label>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="yearConstructed">Year Constructed</label>
         <input type="number" id="m-year" class="name-input w-full" placeholder="1984" style="padding:10px 12px;" />
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:20px;">
-      <button class="btn btn-outline w-full" onclick="closeMosqueModal()">Cancel</button>
-      <button class="btn btn-primary w-full" onclick="submitMosque()">Add Mosque</button>
+      <button class="btn btn-outline w-full" onclick="closeMosqueModal()" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary w-full" onclick="submitMosque()" data-i18n="addMosque">Add Mosque</button>
     </div>
   </div>
 </div>
@@ -785,7 +830,7 @@ function filterMosques() {
 function renderMosqueList() {
   const el = document.getElementById('mosque-list');
   if (!state.filteredMosques.length) {
-    el.innerHTML = renderEmptyState('No mosques found.');
+    el.innerHTML = renderEmptyState(t('noMosques'));
     return;
   }
   el.innerHTML = state.filteredMosques.map(m => `
@@ -867,47 +912,47 @@ async function loadMosqueDetail(id) {
             </div>`
         }
         <div class="hero-overlay">
-          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.75;margin-bottom:4px;">Mosque</div>
+          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.75;margin-bottom:4px;" data-i18n="mosque">Mosque</div>
           <h2>${escHtml(m.name)}</h2>
         </div>
       </div>
 
       ${m.description ? `
       <div class="detail-section">
-        <div class="section-label">About</div>
+        <div class="section-label" data-i18n="about">About</div>
         <p style="line-height:1.7;color:var(--ink-2);">${escHtml(m.description)}</p>
       </div>` : ''}
 
       ${m.info ? `
       <div class="detail-section">
-        <div class="section-label">Information</div>
+        <div class="section-label" data-i18n="information">Information</div>
         <p style="line-height:1.7;color:var(--ink-2);white-space:pre-line;">${escHtml(m.info)}</p>
       </div>` : ''}
 
       <div class="detail-section">
-        <div class="section-label">Details</div>
+        <div class="section-label" data-i18n="details">Details</div>
         <div class="info-grid">
-          ${m.date_constructed ? `<div class="info-chip"><div class="info-chip-label">Established</div><div class="info-chip-value">${m.date_constructed}</div></div>` : ''}
-          ${m.latitude ? `<div class="info-chip"><div class="info-chip-label">Coordinates</div><div class="info-chip-value">${parseFloat(m.latitude).toFixed(4)}°, ${parseFloat(m.longitude).toFixed(4)}°</div></div>` : ''}
+          ${m.date_constructed ? `<div class="info-chip"><div class="info-chip-label" data-i18n="established">Established</div><div class="info-chip-value">${m.date_constructed}</div></div>` : ''}
+          ${m.latitude ? `<div class="info-chip"><div class="info-chip-label" data-i18n="coordinates">Coordinates</div><div class="info-chip-value">${parseFloat(m.latitude).toFixed(4)}°, ${parseFloat(m.longitude).toFixed(4)}°</div></div>` : ''}
         </div>
       </div>
 
       ${m.latitude && m.longitude ? `
       <div class="detail-section">
-        <div class="section-label">Location</div>
+        <div class="section-label" data-i18n="location">Location</div>
         <div id="detail-map"></div>
       </div>` : ''}
 
       <div class="detail-section">
         <div class="flex items-center justify-between" style="margin-bottom:12px;">
-          <div class="section-label" style="margin-bottom:0">Gallery</div>
+          <div class="section-label" style="margin-bottom:0" data-i18n="gallery">Gallery</div>
           <button class="btn btn-gold btn-sm" onclick="openUploadModal(${m.id})">+ Add Photo</button>
         </div>
         ${renderGallery(images.images || [])}
       </div>
 
       <div class="detail-section">
-        <div class="section-label">Upcoming Events</div>
+        <div class="section-label" data-i18n="upcomingEvents">Upcoming Events</div>
         ${renderEvents(events.events || [], m.id)}
       </div>
     `;
@@ -1014,7 +1059,7 @@ function loadMoreMessages() {
 async function postMessage() {
   const msg = document.getElementById('compose-message').value.trim();
   const author = document.getElementById('compose-author').value.trim() || 'Anonymous';
-  if (!msg) { showToast('Please write a message first.', 'error'); return; }
+  if (!msg) { showToast(t('writeFirst'), 'error'); return; }
 
   try {
     await apiFetch('/api/discuss', {
@@ -1022,7 +1067,7 @@ async function postMessage() {
       body: JSON.stringify({ author, message: msg })
     });
     document.getElementById('compose-message').value = '';
-    showToast('Posted!', 'success');
+    showToast(t('postSuccess'), 'success');
     // Prepend optimistically
     const feed = document.getElementById('discuss-feed');
     const div = document.createElement('div');
@@ -1037,7 +1082,7 @@ async function postMessage() {
       </div>`;
     feed.prepend(div);
   } catch(e) {
-    showToast('Failed to post. Try again.', 'error');
+    showToast(t('postFailed'), 'error');
   }
 }
 
@@ -1117,13 +1162,13 @@ async function submitUpload() {
   if (!state.uploadFile || !state.uploadMosqueId) return;
   const btn = document.getElementById('upload-submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Compressing…';
+  btn.textContent = t('compressing');
   document.getElementById('upload-progress').style.display = 'block';
 
   try {
     const compressed = await compressImage(state.uploadFile);
     document.getElementById('progress-bar').style.width = '40%';
-    btn.textContent = 'Uploading…';
+    btn.textContent = t('uploading');
 
     const formData = new FormData();
     formData.append('image', compressed, 'photo.jpg');
@@ -1149,16 +1194,16 @@ async function submitUpload() {
 
     document.getElementById('progress-bar').style.width = '100%';
     closeUploadModal();
-    showToast('Photo uploaded successfully!', 'success');
+    showToast(t('uploadSuccess'), 'success');
 
     // Reload detail if we're on detail page
     if (state.currentMosqueId === state.uploadMosqueId) {
       setTimeout(() => loadMosqueDetail(state.uploadMosqueId), 500);
     }
   } catch(e) {
-    showToast('Upload failed: ' + e.message, 'error');
+    showToast(t('uploadFailed') + ': ' + e.message, 'error');
     btn.disabled = false;
-    btn.textContent = 'Upload Photo';
+    btn.textContent = t('uploadPhoto');
   }
 }
 
@@ -1173,7 +1218,7 @@ function closeMosqueModal() {
 }
 async function submitMosque() {
   const name = document.getElementById('m-name').value.trim();
-  if (!name) { showToast('Name is required', 'error'); return; }
+  if (!name) { showToast(t('nameRequired'), 'error'); return; }
 
   try {
     await apiFetch('/api/mosques', {
@@ -1188,10 +1233,10 @@ async function submitMosque() {
       })
     });
     closeMosqueModal();
-    showToast('Mosque added!', 'success');
+    showToast(t('mosqueAdded'), 'success');
     await loadMosques();
   } catch(e) {
-    showToast('Failed to add mosque.', 'error');
+    showToast(t('mosqueFailed'), 'error');
   }
 }
 
@@ -1216,8 +1261,8 @@ function escHtml(str) {
 function timeAgo(ts) {
   if (!ts) return '';
   const diff = (Date.now() - new Date(ts).getTime()) / 1000;
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 60) return t('justNow');
+  if (diff < 3600) return Math.floor(diff/60) + t('minAgo') + ' ' + t('ago') || t('minAgo');
   if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
   if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
   return new Date(ts).toLocaleDateString('en', {day:'numeric',month:'short',year:'numeric'});
@@ -1241,11 +1286,178 @@ function showToast(msg, type='') {
   setTimeout(() => el.className = 'toast', 3000);
 }
 
+
+// ═══════════════════════════════════════════════════════
+// i18n — English / Arabic Toggle
+// ═══════════════════════════════════════════════════════
+const TRANSLATIONS = {
+  en: {
+    appName: 'Masjid',
+    home: 'Home',
+    community: 'Community',
+    communityHub: 'Community Hub',
+    communitySubtitle: 'Global discussion for the Muslim community',
+    list: 'List',
+    map: 'Map',
+    composePlaceholder: 'Share something with the community…',
+    yourName: 'Your name',
+    post: 'Post',
+    loadMore: 'Load more messages',
+    contributePhoto: 'Contribute a Photo',
+    photoHint: 'Photos are automatically compressed for fast loading.',
+    tapToSelect: 'Tap to select photo',
+    dragDrop: 'or drag and drop here',
+    cancel: 'Cancel',
+    uploadPhoto: 'Upload Photo',
+    addMosque: 'Add a Mosque',
+    mosqueName: 'Mosque Name *',
+    description: 'Description',
+    infoAbout: 'Info / About',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    yearConstructed: 'Year Constructed',
+    allMosques: 'All Mosques',
+    contribute: 'Contribute',
+    searchPlaceholder: 'Search mosques by name or city…',
+    about: 'About',
+    information: 'Information',
+    details: 'Details',
+    established: 'Established',
+    coordinates: 'Coordinates',
+    location: 'Location',
+    gallery: 'Gallery',
+    addPhoto: '+ Add Photo',
+    upcomingEvents: 'Upcoming Events',
+    noPhotos: 'No photos yet. Be the first to contribute!',
+    noEvents: 'No upcoming events.',
+    noMosques: 'No mosques found.',
+    compressing: 'Compressing…',
+    uploading: 'Uploading…',
+    uploadSuccess: 'Photo uploaded successfully!',
+    uploadFailed: 'Upload failed',
+    postSuccess: 'Posted!',
+    postFailed: 'Failed to post. Try again.',
+    mosqueAdded: 'Mosque added!',
+    mosqueFailed: 'Failed to add mosque.',
+    nameRequired: 'Name is required',
+    writeFirst: 'Please write a message first.',
+    mosque: 'Mosque',
+    justNow: 'Just now',
+    minAgo: 'm ago',
+    hrAgo: 'h ago',
+    dayAgo: 'd ago',
+  },
+  ar: {
+    appName: 'مسجد',
+    home: 'الرئيسية',
+    community: 'المجتمع',
+    communityHub: 'منتدى المجتمع',
+    communitySubtitle: 'نقاش عالمي للمجتمع المسلم',
+    list: 'قائمة',
+    map: 'خريطة',
+    composePlaceholder: 'شارك شيئاً مع المجتمع…',
+    yourName: 'اسمك',
+    post: 'نشر',
+    loadMore: 'تحميل المزيد',
+    contributePhoto: 'إضافة صورة',
+    photoHint: 'يتم ضغط الصور تلقائياً لتحميل أسرع.',
+    tapToSelect: 'اضغط لاختيار صورة',
+    dragDrop: 'أو اسحب وأفلت هنا',
+    cancel: 'إلغاء',
+    uploadPhoto: 'رفع الصورة',
+    addMosque: 'إضافة مسجد',
+    mosqueName: 'اسم المسجد *',
+    description: 'الوصف',
+    infoAbout: 'معلومات / عن المسجد',
+    latitude: 'خط العرض',
+    longitude: 'خط الطول',
+    yearConstructed: 'سنة البناء',
+    allMosques: 'كل المساجد',
+    contribute: 'مساهمة',
+    searchPlaceholder: 'ابحث عن المساجد بالاسم أو المدينة…',
+    about: 'عن المسجد',
+    information: 'معلومات',
+    details: 'التفاصيل',
+    established: 'تأسس',
+    coordinates: 'الإحداثيات',
+    location: 'الموقع',
+    gallery: 'معرض الصور',
+    addPhoto: '+ إضافة صورة',
+    upcomingEvents: 'الفعاليات القادمة',
+    noPhotos: 'لا توجد صور بعد. كن أول من يساهم!',
+    noEvents: 'لا توجد فعاليات قادمة.',
+    noMosques: 'لم يتم العثور على مساجد.',
+    compressing: 'جارٍ الضغط…',
+    uploading: 'جارٍ الرفع…',
+    uploadSuccess: 'تم رفع الصورة بنجاح!',
+    uploadFailed: 'فشل الرفع',
+    postSuccess: 'تم النشر!',
+    postFailed: 'فشل النشر. حاول مرة أخرى.',
+    mosqueAdded: 'تمت إضافة المسجد!',
+    mosqueFailed: 'فشل إضافة المسجد.',
+    nameRequired: 'الاسم مطلوب',
+    writeFirst: 'يرجى كتابة رسالة أولاً.',
+    mosque: 'مسجد',
+    justNow: 'الآن',
+    minAgo: 'د',
+    hrAgo: 'س',
+    dayAgo: 'ي',
+  }
+};
+
+let currentLang = localStorage.getItem('masjid_lang') || 'en';
+
+function t(key) {
+  return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+}
+
+function applyLanguage(rerender = false) {
+  const isAr = currentLang === 'ar';
+  const htmlEl = document.getElementById('html-root');
+  htmlEl.lang = currentLang;
+  htmlEl.dir = isAr ? 'rtl' : 'ltr';
+
+  // Update toggle button
+  const btn = document.getElementById('lang-toggle-btn');
+  if (btn) btn.textContent = isAr ? 'English' : 'العربية';
+
+  // Update all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+
+  // Update search input placeholder
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.placeholder = t('searchPlaceholder');
+
+  // Only re-render dynamic content when user explicitly switches language
+  if (rerender) {
+    if (state.mosques.length) renderMosqueList();
+    if (state.currentMosqueId && document.getElementById('screen-detail').classList.contains('active')) {
+      loadMosqueDetail(state.currentMosqueId);
+    }
+  }
+
+  localStorage.setItem('masjid_lang', currentLang);
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'en' ? 'ar' : 'en';
+  applyLanguage(true);
+}
+
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
+applyLanguage();
 loadMosques();
 </script>
 </body>
 </html>
-

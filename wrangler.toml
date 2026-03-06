@@ -11,14 +11,14 @@ compatibility_flags = ["nodejs_compat"]
 
 # ─── Static Assets ────────────────────────────────────
 # Serves the SPA from the public/ directory
-[site]
-bucket = "./public"
+
+assets = { directory = "./public" }
 
 # ─── D1 Database ──────────────────────────────────────
 [[d1_databases]]
 binding      = "DB"          # env.DB in Worker code
 database_name = "mosquesdb"
-database_id  = "YOUR_DATABASE_ID_HERE"   # Replace after: wrangler d1 create mosquesdb
+database_id  = "69b21b26-ecf3-421e-8bc3-be243e47d517" # Replace after: wrangler d1 create mosquesdb
 
 # ─── Environment Variables ────────────────────────────
 [vars]

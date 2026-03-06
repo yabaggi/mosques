@@ -49,9 +49,13 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
-    // ── Serve SPA for non-API routes ──
+    // Serve SPA for non-API routes
     if (!path.startsWith('/api/')) {
-      return env.ASSETS.fetch(request);
+      // env.ASSETS is available on Cloudflare Pages. In Workers dev mode,
+      // the assets config intercepts static files before the Worker runs,
+      // so this branch only fires for missing files (favicon.ico etc.).
+      if (env.ASSETS) return env.ASSETS.fetch(request);
+      return new Response('', { status: 204 }); // silently swallow
     }
 
     try {
@@ -199,6 +203,44 @@ async function getImages(env, url) {
   return json({ images: results });
 }
 
+function blobToResponse(img, maxAge = 86400) {
+  let body;
+
+  if (typeof img === 'string') {
+    // D1 local dev (some versions) returns BLOBs as base64 strings
+    const binary = atob(img);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    body = bytes.buffer;
+  } else if (img instanceof ArrayBuffer || ArrayBuffer.isView(img)) {
+    // D1 production returns ArrayBuffer
+    body = img;
+  } else if (img && typeof img === 'object' && img.type === 'Buffer' && Array.isArray(img.data)) {
+    // Some Wrangler versions return a Node Buffer-like object { type:'Buffer', data:[...] }
+    body = new Uint8Array(img.data).buffer;
+  } else if (Array.isArray(img)) {
+    // Wrangler local dev (latest) returns BLOBs as a plain number array [255,216,255,...]
+    body = new Uint8Array(img).buffer;
+  } else if (img && typeof img === 'object') {
+    // Fallback: treat any object with numeric keys as array-like
+    const values = Object.values(img);
+    if (values.length && typeof values[0] === 'number') {
+      body = new Uint8Array(values).buffer;
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+
+  return new Response(body, {
+    headers: corsHeaders({
+      'Content-Type': 'image/jpeg',
+      'Cache-Control': `public, max-age=${maxAge}`,
+    }),
+  });
+}
+
 async function serveImage(env, id) {
   const row = await env.DB.prepare(
     'SELECT img FROM imgs WHERE id = ?'
@@ -206,13 +248,12 @@ async function serveImage(env, id) {
 
   if (!row?.img) return err('Image not found', 404);
 
-  // D1 returns BLOBs as ArrayBuffer
-  return new Response(row.img, {
-    headers: corsHeaders({
-      'Content-Type': 'image/jpeg',
-      'Cache-Control': 'public, max-age=86400',
-    }),
-  });
+  const response = blobToResponse(row.img);
+  if (!response) {
+    console.error('Unknown img type:', typeof row.img, JSON.stringify(row.img)?.slice(0, 80));
+    return err('Could not decode image', 500);
+  }
+  return response;
 }
 
 async function getFirstMosqueImage(env, mosqueId) {
@@ -222,47 +263,60 @@ async function getFirstMosqueImage(env, mosqueId) {
 
   if (!row?.img) return err('No image found', 404);
 
-  return new Response(row.img, {
-    headers: corsHeaders({
-      'Content-Type': 'image/jpeg',
-      'Cache-Control': 'public, max-age=3600',
-    }),
-  });
+  const response = blobToResponse(row.img, 3600);
+  if (!response) return err('Could not decode image', 500);
+  return response;
 }
 
 async function uploadImage(env, request) {
   const contentType = request.headers.get('Content-Type') || '';
 
-  let imageBlob;
+  let imageBuffer;
   let mosque_id;
 
-  if (contentType.includes('multipart/form-data')) {
-    const formData = await request.formData();
-    const file = formData.get('image');
-    mosque_id = formData.get('mosque_id');
+  try {
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const file = formData.get('image');
+      mosque_id = formData.get('mosque_id');
 
-    if (!file || !mosque_id) return err('image and mosque_id required');
-    if (file.size > 1024 * 1024) return err('Image too large. Max 1 MiB after compression.');
+      if (!file) return err('image field missing from form data');
+      if (!mosque_id) return err('mosque_id field missing from form data');
 
-    imageBlob = await file.arrayBuffer();
-  } else {
-    // JSON base64 fallback
-    const body = await request.json();
-    mosque_id = body.mosque_id;
-    const b64 = body.image;
-    if (!b64 || !mosque_id) return err('image (base64) and mosque_id required');
-    const binaryStr = atob(b64.replace(/^data:image\/[a-z]+;base64,/, ''));
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-    imageBlob = bytes.buffer;
-    if (imageBlob.byteLength > 1024 * 1024) return err('Image too large. Max 1 MiB after compression.');
+      imageBuffer = await file.arrayBuffer();
+
+      console.log(`Upload received: mosque_id=${mosque_id}, size=${imageBuffer.byteLength} bytes`);
+
+      if (imageBuffer.byteLength === 0) return err('Image is empty');
+      if (imageBuffer.byteLength > 1024 * 1024) return err(`Image too large: ${imageBuffer.byteLength} bytes. Max 1 MiB.`);
+
+    } else {
+      // JSON base64 fallback
+      const body = await request.json();
+      mosque_id = body.mosque_id;
+      const b64 = (body.image || '').replace(/^data:image\/[a-z]+;base64,/, '');
+      if (!b64) return err('image (base64) is missing');
+      if (!mosque_id) return err('mosque_id is missing');
+
+      const binaryStr = atob(b64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      imageBuffer = bytes.buffer;
+
+      if (imageBuffer.byteLength > 1024 * 1024) return err('Image too large. Max 1 MiB after compression.');
+    }
+
+    const result = await env.DB.prepare(
+      `INSERT INTO imgs (mosque_id, img, created_at) VALUES (?, ?, datetime('now'))`
+    ).bind(Number(mosque_id), imageBuffer).run();
+
+    console.log(`Image stored: id=${result.meta.last_row_id}`);
+    return json({ success: true, id: result.meta.last_row_id }, 201);
+
+  } catch (e) {
+    console.error('Upload error:', e.message, e.stack);
+    return err('Upload failed: ' + e.message, 500);
   }
-
-  const result = await env.DB.prepare(
-    `INSERT INTO imgs (mosque_id, img, created_at) VALUES (?, ?, datetime('now'))`
-  ).bind(mosque_id, imageBlob).run();
-
-  return json({ success: true, id: result.meta.last_row_id }, 201);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -305,4 +359,3 @@ async function postDiscuss(env, request) {
 
   return json({ success: true, id: result.meta.last_row_id }, 201);
 }
-

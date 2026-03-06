@@ -1,2 +1,15 @@
+# Wrangler local cache & state (auth tokens, local D1, temp files)
+.wrangler/
+
+# Node modules
 node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment secrets (never commit these)
+.env
+.env.local
+.dev.vars
 GEMINI.md
