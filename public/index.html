@@ -1,18 +1,1251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mosques in Oman</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Masjid — Mosque Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    /* ─── Design System ─── */
+    :root {
+      --sand:    #F5EFE0;
+      --sand-2:  #EDE3CC;
+      --ink:     #1A1208;
+      --ink-2:   #3D2F1A;
+      --gold:    #C9893A;
+      --gold-2:  #E8A84E;
+      --teal:    #1E5F5A;
+      --teal-2:  #2A7A74;
+      --cream:   #FDFAF4;
+      --muted:   #8A7A65;
+      --border:  rgba(201,137,58,0.2);
+      --shadow:  0 4px 24px rgba(26,18,8,0.12);
+      --r:       14px;
+      --r-sm:    8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Typography ─── */
+    .font-display { font-family: 'Amiri', serif; }
+    h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); font-family: 'Amiri', serif; line-height: 1.15; }
+    h2 { font-size: clamp(1.25rem, 3vw, 1.75rem); font-family: 'Amiri', serif; }
+    h3 { font-size: 1.1rem; font-weight: 600; }
+
+    /* ─── Layout ─── */
+    .app { display: flex; flex-direction: column; min-height: 100dvh; }
+    .screen { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.25s ease; }
+    .screen.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ─── Top Nav ─── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(253,250,244,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .topbar-logo {
+      font-family: 'Amiri', serif;
+      font-size: 1.4rem;
+      color: var(--teal);
+      letter-spacing: 0.01em;
+      flex: 1;
+    }
+    .topbar-logo span { color: var(--gold); }
+    .icon-btn {
+      width: 40px; height: 40px;
+      border: none; background: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      color: var(--ink-2);
+      transition: background 0.15s;
+    }
+    .icon-btn:hover { background: var(--sand); }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      border: none; background: none; cursor: pointer;
+      color: var(--teal); font-size: 0.9rem; font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      padding: 6px 0;
+    }
+
+    /* ─── Bottom Nav ─── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: var(--ink);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-item {
+      flex: 1; border: none; background: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; padding: 10px 0;
+      color: var(--muted);
+      font-size: 0.65rem; font-weight: 500; letter-spacing: 0.04em;
+      font-family: 'DM Sans', sans-serif;
+      text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--gold-2); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .main-content { flex: 1; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+
+    /* ─── Cards ─── */
+    .card {
+      background: white;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .mosque-card {
+      display: flex; flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .mosque-card:active { transform: scale(0.98); }
+    .mosque-card-img {
+      height: 140px; background: var(--sand-2);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .mosque-card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .mosque-card-img .placeholder-icon {
+      color: var(--gold); opacity: 0.4;
+    }
+    .mosque-card-body { padding: 14px 16px; }
+    .mosque-card-body h3 { margin-bottom: 4px; }
+    .mosque-card-meta {
+      font-size: 0.8rem; color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tag {
+      display: inline-flex; align-items: center;
+      background: var(--sand); color: var(--teal);
+      font-size: 0.7rem; font-weight: 600;
+      padding: 3px 8px; border-radius: 99px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── Search ─── */
+    .search-wrap {
+      padding: 16px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%; padding: 12px 16px 12px 44px;
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      background: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .search-input:focus { border-color: var(--gold); }
+    .search-icon {
+      position: absolute; left: 30px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); pointer-events: none;
+    }
+
+    /* ─── Map ─── */
+    #map { height: 240px; width: 100%; }
+    .map-toggle-row {
+      display: flex; gap: 8px;
+      padding: 0 16px 12px;
+    }
+    .toggle-btn {
+      flex: 1; padding: 8px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      background: white;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem; font-weight: 500;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: white;
+    }
+
+    /* ─── Grid ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-1 { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ─── Mosque Detail ─── */
+    .hero-banner {
+      height: 220px; background: var(--sand-2);
+      position: relative; overflow: hidden;
+    }
+    .hero-banner img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-banner-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 50%, var(--sand-2) 100%);
+    }
+    .hero-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(26,18,8,0.7) 0%, transparent 100%);
+      padding: 20px 16px 12px;
+      color: white;
+    }
+    .hero-overlay h2 { font-size: 1.6rem; }
+    .detail-section { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+    .detail-section:last-child { border-bottom: none; }
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .info-chip {
+      background: var(--sand); border-radius: var(--r-sm);
+      padding: 10px 12px;
+    }
+    .info-chip-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 2px; }
+    .info-chip-value { font-size: 0.9rem; font-weight: 500; color: var(--ink); }
+
+    /* Gallery */
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 3px;
+    }
+    .gallery-thumb {
+      aspect-ratio: 1; overflow: hidden;
+      background: var(--sand-2);
+      cursor: pointer;
+    }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Events */
+    .event-item {
+      display: flex; gap: 12px;
+      padding: 12px;
+      background: var(--sand);
+      border-radius: var(--r-sm);
+      margin-bottom: 10px;
+    }
+    .event-date-box {
+      min-width: 48px; height: 52px;
+      background: var(--teal);
+      border-radius: var(--r-sm);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: white;
+    }
+    .event-date-box .month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    .event-date-box .day { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+    .event-info h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
+    .event-info p { font-size: 0.8rem; color: var(--muted); }
+
+    /* ─── Discuss / Community ─── */
+    .discuss-header {
+      padding: 20px 16px 12px;
+      background: linear-gradient(180deg, var(--teal) 0%, var(--teal-2) 100%);
+      color: white;
+    }
+    .discuss-header h2 { color: white; margin-bottom: 4px; }
+    .discuss-header p { opacity: 0.75; font-size: 0.85rem; }
+
+    .compose-box {
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .compose-inner { flex: 1; }
+    .compose-input {
+      width: 100%; border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      resize: none; outline: none;
+      background: var(--cream);
+      transition: border-color 0.2s;
+      min-height: 72px;
+    }
+    .compose-input:focus { border-color: var(--teal); }
+    .compose-footer {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 8px;
+    }
+    .name-input {
+      flex: 1; border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; outline: none;
+      background: white;
+    }
+    .name-input:focus { border-color: var(--teal); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px;
+      border: none; border-radius: 99px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; font-weight: 600;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--teal); color: white; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-gold { background: var(--gold); color: white; }
+    .btn-gold:hover { opacity: 0.9; }
+    .btn-outline {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--ink-2);
+    }
+    .btn-sm { padding: 7px 14px; font-size: 0.8rem; }
+
+    .message-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 10px;
+    }
+    .message-bubble { flex: 1; }
+    .message-author {
+      font-size: 0.8rem; font-weight: 600;
+      color: var(--teal); margin-bottom: 4px;
+    }
+    .message-text {
+      font-size: 0.92rem; color: var(--ink);
+      line-height: 1.5;
+    }
+    .message-time {
+      font-size: 0.72rem; color: var(--muted);
+      margin-top: 6px;
+    }
+    .load-more-btn {
+      width: calc(100% - 32px);
+      margin: 16px;
+      padding: 12px;
+      background: var(--sand);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; font-weight: 500;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .load-more-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ─── Upload Modal ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(26,18,8,0.6);
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      width: 100%; max-width: 480px;
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 16px 32px;
+      animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 0 auto 20px;
+    }
+    .modal-title { font-family: 'Amiri', serif; margin-bottom: 16px; }
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--r);
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: var(--sand); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-preview {
+      width: 100%; height: 180px;
+      object-fit: cover; border-radius: var(--r-sm);
+      margin-bottom: 12px; display: none;
+    }
+    .upload-progress {
+      height: 4px; background: var(--sand-2);
+      border-radius: 99px; overflow: hidden;
+      margin: 12px 0; display: none;
+    }
+    .upload-progress-bar {
+      height: 100%; background: var(--teal);
+      border-radius: 99px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    /* ─── States ─── */
+    .empty-state {
+      text-align: center; padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-state svg { color: var(--sand-2); margin-bottom: 12px; }
+    .loading-dots {
+      display: flex; gap: 6px; justify-content: center; padding: 32px;
+    }
+    .loading-dots span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold);
+      animation: bounce 0.8s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: var(--ink); color: white;
+      padding: 10px 20px; border-radius: 99px;
+      font-size: 0.85rem; font-weight: 500;
+      z-index: 300; opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--teal); }
+    .toast.error { background: #c0392b; }
+
+    /* ─── Ornamental ─── */
+    .arabic-ornament {
+      font-family: 'Amiri', serif;
+      font-size: 1.8rem;
+      color: var(--gold);
+      opacity: 0.3;
+      text-align: center;
+      line-height: 1;
+    }
+
+    /* ─── Utilities ─── */
+    .p-16 { padding: 16px; }
+    .px-16 { padding-left: 16px; padding-right: 16px; }
+    .py-8 { padding-top: 8px; padding-bottom: 8px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .text-muted { color: var(--muted); }
+    .text-sm { font-size: 0.85rem; }
+    .font-medium { font-weight: 500; }
+    .w-full { width: 100%; }
+    .hidden { display: none !important; }
+
+    /* Mosque detail map */
+    #detail-map { height: 180px; border-radius: var(--r-sm); overflow: hidden; }
+
+    /* Lightbox */
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 250;
+      background: rgba(0,0,0,0.92);
+      align-items: center; justify-content: center;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 94vw; max-height: 90vh; border-radius: 8px; }
+    .lightbox-close {
+      position: absolute; top: 16px; right: 16px;
+      color: white; font-size: 1.8rem; cursor: pointer;
+      background: none; border: none;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    @media (min-width: 480px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 360px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Mosques in Oman</h1>
+<div class="app" id="app">
+
+  <!-- ─── TOP BAR ─── -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-logo">مسجد <span>Masjid</span></div>
+    <button class="icon-btn" id="add-mosque-btn" title="Add Mosque" onclick="showAddMosqueModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+    </button>
   </header>
-  <main>
-    <div id="mosques-list"></div>
-  </main>
-  <script src="script.js"></script>
+
+  <!-- ─── HOME SCREEN ─── -->
+  <div class="screen active main-content" id="screen-home">
+    <div class="search-wrap">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" id="search-input" type="search" placeholder="Search mosques by name or city…" oninput="filterMosques()" />
+    </div>
+
+    <div class="map-toggle-row">
+      <button class="toggle-btn active" id="btn-list" onclick="switchView('list')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        List
+      </button>
+      <button class="toggle-btn" id="btn-map" onclick="switchView('map')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:4px"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Map
+      </button>
+    </div>
+
+    <div id="map-view" style="display:none;">
+      <div id="map"></div>
+    </div>
+
+    <div id="list-view" style="padding:0 16px 16px;">
+      <div id="mosque-list" class="grid-2">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MOSQUE DETAIL SCREEN ─── -->
+  <div class="screen main-content" id="screen-detail">
+    <div class="topbar" style="position:relative;padding:10px 16px;">
+      <button class="back-btn" onclick="goBack()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        All Mosques
+      </button>
+      <div style="flex:1"></div>
+      <button class="btn btn-gold btn-sm" id="contribute-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Contribute
+      </button>
+    </div>
+
+    <div id="detail-content">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- ─── COMMUNITY SCREEN ─── -->
+  <div class="screen main-content" id="screen-community">
+    <div class="discuss-header">
+      <div class="arabic-ornament" style="opacity:0.2;color:white;margin-bottom:8px;">﷽</div>
+      <h2>Community Hub</h2>
+      <p>Global discussion for the Muslim community</p>
+    </div>
+
+    <div class="compose-box">
+      <div class="avatar" id="user-avatar">?</div>
+      <div class="compose-inner">
+        <textarea class="compose-input" id="compose-message" placeholder="Share something with the community…" rows="3"></textarea>
+        <div class="compose-footer">
+          <input class="name-input" id="compose-author" type="text" placeholder="Your name" maxlength="50" oninput="updateAvatar()" />
+          <button class="btn btn-primary btn-sm" onclick="postMessage()">Post</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="discuss-feed">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+    <button class="load-more-btn hidden" id="load-more-btn" onclick="loadMoreMessages()">
+      Load more messages
+    </button>
+  </div>
+
+  <!-- ─── BOTTOM NAV ─── -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="navigate('home')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Home
+    </button>
+    <button class="nav-item" id="nav-community" onclick="navigate('community')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      Community
+    </button>
+  </nav>
+</div>
+
+<!-- ─── IMAGE UPLOAD MODAL ─── -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">Contribute a Photo</h3>
+    <p class="text-sm text-muted" style="margin-bottom:16px;">Photos are automatically compressed for fast loading.</p>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" accept="image/*" capture="environment" id="file-input" onchange="handleFileSelect(event)" />
+      <img class="upload-preview" id="upload-preview" alt="Preview" />
+      <div id="upload-placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--gold);margin:0 auto 12px;display:block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <div style="font-weight:600;margin-bottom:4px;">Tap to select photo</div>
+        <div class="text-sm text-muted">or drag and drop here</div>
+      </div>
+    </div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="upload-progress-bar" id="progress-bar"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-outline w-full" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn btn-primary w-full" id="upload-submit-btn" onclick="submitUpload()" disabled>Upload Photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ADD MOSQUE MODAL ─── -->
+<div class="modal-overlay" id="mosque-modal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">Add a Mosque</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Mosque Name *</label>
+        <input type="text" id="m-name" class="name-input w-full" placeholder="Al-Masjid al-Haram" style="padding:10px 12px;" />
+      </div>
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Description</label>
+        <textarea id="m-desc" class="compose-input" placeholder="Brief description…" rows="2" style="min-height:60px;"></textarea>
+      </div>
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Info / About</label>
+        <textarea id="m-info" class="compose-input" placeholder="Details, history, services…" rows="3" style="min-height:80px;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Latitude</label>
+          <input type="number" step="any" id="m-lat" class="name-input w-full" placeholder="21.4225" style="padding:10px 12px;" />
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Longitude</label>
+          <input type="number" step="any" id="m-lng" class="name-input w-full" placeholder="39.8262" style="padding:10px 12px;" />
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Year Constructed</label>
+        <input type="number" id="m-year" class="name-input w-full" placeholder="1984" style="padding:10px 12px;" />
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-outline w-full" onclick="closeMosqueModal()">Cancel</button>
+      <button class="btn btn-primary w-full" onclick="submitMosque()">Add Mosque</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── LIGHTBOX ─── -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Gallery" />
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════
+const API_BASE = ''; // Same origin — Cloudflare Worker/Pages handles routing
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  mosques: [],
+  filteredMosques: [],
+  currentMosqueId: null,
+  currentView: 'list',
+  discussPage: 0,
+  discussPageSize: 20,
+  discussHasMore: true,
+  uploadFile: null,
+  uploadMosqueId: null,
+  leafletMap: null,
+  detailMap: null,
+};
+
+// ═══════════════════════════════════════════════════════
+// ROUTING / NAVIGATION
+// ═══════════════════════════════════════════════════════
+function navigate(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const el = document.getElementById('screen-' + screen);
+  if (el) el.classList.add('active');
+
+  const nav = document.getElementById('nav-' + screen);
+  if (nav) nav.classList.add('active');
+
+  // Show/hide the + button
+  document.getElementById('add-mosque-btn').style.display = (screen === 'home') ? 'flex' : 'none';
+
+  if (screen === 'community') {
+    loadDiscuss();
+  }
+  if (screen === 'home' && state.currentView === 'map') {
+    setTimeout(() => state.leafletMap?.invalidateSize(), 100);
+  }
+}
+
+function showDetail(mosqueId) {
+  state.currentMosqueId = mosqueId;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('add-mosque-btn').style.display = 'none';
+  loadMosqueDetail(mosqueId);
+}
+
+function goBack() {
+  navigate('home');
+}
+
+// ═══════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════
+async function apiFetch(path, opts = {}) {
+  try {
+    const res = await fetch(API_BASE + path, {
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      ...opts
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return await res.json();
+  } catch (e) {
+    console.error('API error:', e);
+    throw e;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME — MOSQUES LIST
+// ═══════════════════════════════════════════════════════
+async function loadMosques() {
+  try {
+    const data = await apiFetch('/api/mosques');
+    state.mosques = data.mosques || [];
+    state.filteredMosques = [...state.mosques];
+    renderMosqueList();
+    initMap();
+  } catch (e) {
+    document.getElementById('mosque-list').innerHTML = renderEmptyState('Could not load mosques. Is the API running?');
+  }
+}
+
+function filterMosques() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  state.filteredMosques = state.mosques.filter(m =>
+    m.name.toLowerCase().includes(q) ||
+    (m.description || '').toLowerCase().includes(q)
+  );
+  renderMosqueList();
+  if (state.currentView === 'map') updateMapMarkers();
+}
+
+function renderMosqueList() {
+  const el = document.getElementById('mosque-list');
+  if (!state.filteredMosques.length) {
+    el.innerHTML = renderEmptyState('No mosques found.');
+    return;
+  }
+  el.innerHTML = state.filteredMosques.map(m => `
+    <div class="card mosque-card" onclick="showDetail(${m.id})">
+      <div class="mosque-card-img">
+        ${m.has_image
+          ? `<img src="/api/image/mosque/${m.id}/first" alt="${m.name}" loading="lazy" onerror="this.style.display='none'" />`
+          : `<svg class="placeholder-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`
+        }
+      </div>
+      <div class="mosque-card-body">
+        <h3>${escHtml(m.name)}</h3>
+        <div class="mosque-card-meta">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${m.latitude ? `${parseFloat(m.latitude).toFixed(3)}, ${parseFloat(m.longitude).toFixed(3)}` : 'Location TBD'}
+        </div>
+        ${m.date_constructed ? `<div class="mt-8"><span class="tag">Est. ${m.date_constructed}</span></div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════
+function switchView(v) {
+  state.currentView = v;
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  document.getElementById('btn-map').classList.toggle('active', v === 'map');
+  document.getElementById('list-view').style.display = v === 'list' ? 'block' : 'none';
+  document.getElementById('map-view').style.display = v === 'map' ? 'block' : 'none';
+  if (v === 'map') {
+    if (!state.leafletMap) initMap();
+    else setTimeout(() => state.leafletMap.invalidateSize(), 100);
+    updateMapMarkers();
+  }
+}
+
+function initMap() {
+  if (state.leafletMap) return;
+  state.leafletMap = L.map('map').setView([21.4225, 39.8262], 3);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(state.leafletMap);
+  updateMapMarkers();
+}
+
+function updateMapMarkers() {
+  if (!state.leafletMap) return;
+  state.leafletMap.eachLayer(l => { if (l instanceof L.Marker) state.leafletMap.removeLayer(l); });
+  state.filteredMosques.filter(m => m.latitude && m.longitude).forEach(m => {
+    const marker = L.marker([m.latitude, m.longitude]);
+    marker.bindPopup(`<b>${escHtml(m.name)}</b><br><a href="#" onclick="showDetail(${m.id});return false;">View Details →</a>`);
+    marker.addTo(state.leafletMap);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MOSQUE DETAIL
+// ═══════════════════════════════════════════════════════
+async function loadMosqueDetail(id) {
+  document.getElementById('detail-content').innerHTML = `<div class="loading-dots"><span></span><span></span><span></span></div>`;
+  document.getElementById('contribute-btn').onclick = () => openUploadModal(id);
+
+  try {
+    const [mosque, events, images] = await Promise.all([
+      apiFetch(`/api/mosques/${id}`),
+      apiFetch(`/api/events?mosque_id=${id}`),
+      apiFetch(`/api/images?mosque_id=${id}`)
+    ]);
+
+    const m = mosque.mosque;
+    document.getElementById('detail-content').innerHTML = `
+      <div class="hero-banner">
+        ${images.images?.length
+          ? `<img src="/api/image/${images.images[0].id}" alt="${escHtml(m.name)}" onerror="this.style.display='none'" />`
+          : `<div class="hero-banner-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="0.6" opacity="0.4"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            </div>`
+        }
+        <div class="hero-overlay">
+          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.75;margin-bottom:4px;">Mosque</div>
+          <h2>${escHtml(m.name)}</h2>
+        </div>
+      </div>
+
+      ${m.description ? `
+      <div class="detail-section">
+        <div class="section-label">About</div>
+        <p style="line-height:1.7;color:var(--ink-2);">${escHtml(m.description)}</p>
+      </div>` : ''}
+
+      ${m.info ? `
+      <div class="detail-section">
+        <div class="section-label">Information</div>
+        <p style="line-height:1.7;color:var(--ink-2);white-space:pre-line;">${escHtml(m.info)}</p>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <div class="section-label">Details</div>
+        <div class="info-grid">
+          ${m.date_constructed ? `<div class="info-chip"><div class="info-chip-label">Established</div><div class="info-chip-value">${m.date_constructed}</div></div>` : ''}
+          ${m.latitude ? `<div class="info-chip"><div class="info-chip-label">Coordinates</div><div class="info-chip-value">${parseFloat(m.latitude).toFixed(4)}°, ${parseFloat(m.longitude).toFixed(4)}°</div></div>` : ''}
+        </div>
+      </div>
+
+      ${m.latitude && m.longitude ? `
+      <div class="detail-section">
+        <div class="section-label">Location</div>
+        <div id="detail-map"></div>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <div class="flex items-center justify-between" style="margin-bottom:12px;">
+          <div class="section-label" style="margin-bottom:0">Gallery</div>
+          <button class="btn btn-gold btn-sm" onclick="openUploadModal(${m.id})">+ Add Photo</button>
+        </div>
+        ${renderGallery(images.images || [])}
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">Upcoming Events</div>
+        ${renderEvents(events.events || [], m.id)}
+      </div>
+    `;
+
+    if (m.latitude && m.longitude) {
+      setTimeout(() => {
+        if (state.detailMap) { state.detailMap.remove(); state.detailMap = null; }
+        state.detailMap = L.map('detail-map').setView([m.latitude, m.longitude], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.detailMap);
+        L.marker([m.latitude, m.longitude]).addTo(state.detailMap).bindPopup(m.name).openPopup();
+      }, 100);
+    }
+  } catch(e) {
+    document.getElementById('detail-content').innerHTML = renderEmptyState('Could not load mosque details.');
+  }
+}
+
+function renderGallery(images) {
+  if (!images.length) return `
+    <div style="text-align:center;padding:32px;color:var(--muted);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" style="color:var(--sand-2);display:block;margin:0 auto 8px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      No photos yet. Be the first to contribute!
+    </div>`;
+  return `<div class="gallery-grid">${images.map(img => `
+    <div class="gallery-thumb" onclick="openLightbox('/api/image/${img.id}')">
+      <img src="/api/image/${img.id}" alt="Mosque photo" loading="lazy" />
+    </div>`).join('')}</div>`;
+}
+
+function renderEvents(events, mosqueId) {
+  if (!events.length) return `<div style="text-align:center;padding:24px;color:var(--muted);">No upcoming events.</div>`;
+  return events.map(ev => {
+    const d = new Date(ev.date);
+    const month = d.toLocaleString('en', {month:'short'}).toUpperCase();
+    const day = d.getDate();
+    return `<div class="event-item">
+      <div class="event-date-box"><div class="month">${month}</div><div class="day">${day}</div></div>
+      <div class="event-info">
+        <h4>${escHtml(ev.name)}</h4>
+        <p>${escHtml(ev.description || '')}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// DISCUSS / COMMUNITY
+// ═══════════════════════════════════════════════════════
+let discussLoaded = false;
+let discussMessages = [];
+
+async function loadDiscuss(reset = false) {
+  if (discussLoaded && !reset) return;
+  if (reset) {
+    state.discussPage = 0;
+    discussMessages = [];
+    document.getElementById('discuss-feed').innerHTML = '';
+    state.discussHasMore = true;
+  }
+  if (!state.discussHasMore) return;
+
+  try {
+    const data = await apiFetch(`/api/discuss?page=${state.discussPage}&limit=${state.discussPageSize}`);
+    const msgs = data.messages || [];
+    discussMessages = [...discussMessages, ...msgs];
+    renderDiscussFeed(msgs, state.discussPage === 0);
+    state.discussHasMore = msgs.length === state.discussPageSize;
+    state.discussPage++;
+    discussLoaded = true;
+    document.getElementById('load-more-btn').classList.toggle('hidden', !state.discussHasMore);
+  } catch(e) {
+    if (state.discussPage === 0) {
+      document.getElementById('discuss-feed').innerHTML = renderEmptyState('Could not load community feed.');
+    }
+  }
+}
+
+function renderDiscussFeed(msgs, replace = false) {
+  const feed = document.getElementById('discuss-feed');
+  if (replace) feed.innerHTML = '';
+  if (!msgs.length && replace) {
+    feed.innerHTML = `<div class="empty-state"><p>No messages yet. Start the conversation!</p></div>`;
+    return;
+  }
+  msgs.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = 'message-item';
+    const initials = (msg.author || 'A').charAt(0).toUpperCase();
+    div.innerHTML = `
+      <div class="avatar" style="background:${authorColor(msg.author)}">${initials}</div>
+      <div class="message-bubble">
+        <div class="message-author">${escHtml(msg.author || 'Anonymous')}</div>
+        <div class="message-text">${escHtml(msg.message)}</div>
+        <div class="message-time">${timeAgo(msg.created_at)}</div>
+      </div>`;
+    feed.appendChild(div);
+  });
+}
+
+function loadMoreMessages() {
+  loadDiscuss();
+}
+
+async function postMessage() {
+  const msg = document.getElementById('compose-message').value.trim();
+  const author = document.getElementById('compose-author').value.trim() || 'Anonymous';
+  if (!msg) { showToast('Please write a message first.', 'error'); return; }
+
+  try {
+    await apiFetch('/api/discuss', {
+      method: 'POST',
+      body: JSON.stringify({ author, message: msg })
+    });
+    document.getElementById('compose-message').value = '';
+    showToast('Posted!', 'success');
+    // Prepend optimistically
+    const feed = document.getElementById('discuss-feed');
+    const div = document.createElement('div');
+    div.className = 'message-item';
+    const initials = author.charAt(0).toUpperCase();
+    div.innerHTML = `
+      <div class="avatar" style="background:${authorColor(author)}">${initials}</div>
+      <div class="message-bubble">
+        <div class="message-author">${escHtml(author)}</div>
+        <div class="message-text">${escHtml(msg)}</div>
+        <div class="message-time">Just now</div>
+      </div>`;
+    feed.prepend(div);
+  } catch(e) {
+    showToast('Failed to post. Try again.', 'error');
+  }
+}
+
+function updateAvatar() {
+  const name = document.getElementById('compose-author').value.trim();
+  const av = document.getElementById('user-avatar');
+  av.textContent = name ? name.charAt(0).toUpperCase() : '?';
+  av.style.background = name ? authorColor(name) : 'var(--gold)';
+}
+
+// ═══════════════════════════════════════════════════════
+// IMAGE UPLOAD — Canvas Compressor
+// ═══════════════════════════════════════════════════════
+function openUploadModal(mosqueId) {
+  state.uploadMosqueId = mosqueId;
+  state.uploadFile = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-placeholder').style.display = 'block';
+  document.getElementById('upload-submit-btn').disabled = true;
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.remove('open');
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const prev = document.getElementById('upload-preview');
+    prev.src = ev.target.result;
+    prev.style.display = 'block';
+    document.getElementById('upload-placeholder').style.display = 'none';
+    document.getElementById('upload-submit-btn').disabled = false;
+    state.uploadFile = file;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function compressImage(file, maxBytes = 800 * 1024, maxDim = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width: w, height: h } = img;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const tryCompress = (q) => {
+        canvas.toBlob(blob => {
+          if (!blob) return reject(new Error('Compression failed'));
+          if (blob.size <= maxBytes || q < 0.3) resolve(blob);
+          else tryCompress(Math.round(q * 10 - 1) / 10);
+        }, 'image/jpeg', q);
+      };
+      tryCompress(quality);
+    };
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = url;
+  });
+}
+
+async function submitUpload() {
+  if (!state.uploadFile || !state.uploadMosqueId) return;
+  const btn = document.getElementById('upload-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Compressing…';
+  document.getElementById('upload-progress').style.display = 'block';
+
+  try {
+    const compressed = await compressImage(state.uploadFile);
+    document.getElementById('progress-bar').style.width = '40%';
+    btn.textContent = 'Uploading…';
+
+    const formData = new FormData();
+    formData.append('image', compressed, 'photo.jpg');
+    formData.append('mosque_id', state.uploadMosqueId);
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) {
+        const pct = 40 + Math.round((e.loaded / e.total) * 55);
+        document.getElementById('progress-bar').style.width = pct + '%';
+      }
+    });
+
+    await new Promise((res, rej) => {
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) res(xhr.responseText);
+        else rej(new Error(xhr.responseText));
+      };
+      xhr.onerror = () => rej(new Error('Network error'));
+      xhr.open('POST', '/api/upload');
+      xhr.send(formData);
+    });
+
+    document.getElementById('progress-bar').style.width = '100%';
+    closeUploadModal();
+    showToast('Photo uploaded successfully!', 'success');
+
+    // Reload detail if we're on detail page
+    if (state.currentMosqueId === state.uploadMosqueId) {
+      setTimeout(() => loadMosqueDetail(state.uploadMosqueId), 500);
+    }
+  } catch(e) {
+    showToast('Upload failed: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Upload Photo';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ADD MOSQUE MODAL
+// ═══════════════════════════════════════════════════════
+function showAddMosqueModal() {
+  document.getElementById('mosque-modal').classList.add('open');
+}
+function closeMosqueModal() {
+  document.getElementById('mosque-modal').classList.remove('open');
+}
+async function submitMosque() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+
+  try {
+    await apiFetch('/api/mosques', {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        description: document.getElementById('m-desc').value.trim(),
+        info: document.getElementById('m-info').value.trim(),
+        latitude: parseFloat(document.getElementById('m-lat').value) || null,
+        longitude: parseFloat(document.getElementById('m-lng').value) || null,
+        date_constructed: document.getElementById('m-year').value.trim() || null
+      })
+    });
+    closeMosqueModal();
+    showToast('Mosque added!', 'success');
+    await loadMosques();
+  } catch(e) {
+    showToast('Failed to add mosque.', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LIGHTBOX
+// ═══════════════════════════════════════════════════════
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return new Date(ts).toLocaleDateString('en', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function authorColor(name) {
+  const colors = ['#1E5F5A','#C9893A','#2D6A9F','#7D4E8C','#3A7A4A','#9A3E3E'];
+  let hash = 0;
+  for (let c of (name||'')) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function renderEmptyState(msg) {
+  return `<div class="empty-state"><p>${msg}</p></div>`;
+}
+
+function showToast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => el.className = 'toast', 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+loadMosques();
+</script>
 </body>
 </html>
+
