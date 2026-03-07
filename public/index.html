@@ -620,7 +620,7 @@
       <div class="compose-inner">
         <textarea class="compose-input" id="compose-message" placeholder="" data-i18n-placeholder="composePlaceholder" rows="3"></textarea>
         <div class="compose-footer">
-          <input class="name-input" id="compose-author" type="text" placeholder="" data-i18n-placeholder="yourName" maxlength="50" oninput="updateAvatar()" />
+          <input class="name-input" id="compose-author" type="text" placeholder="" data-i18n-placeholder="yourName" maxlength="50" oninput="updateAvatar()" style="flex:1;" />
           <button class="btn btn-primary btn-sm" onclick="postMessage()" data-i18n="post">Post</button>
         </div>
       </div>
@@ -683,13 +683,25 @@
     <div class="modal-handle"></div>
     <h3 class="modal-title" data-i18n="addEvent">Add Event</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="eventName">Event Name *</label>
-        <input type="text" id="ev-name" class="name-input w-full" placeholder="Eid Prayer, Quran Class…" style="padding:10px 12px;" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Name (EN) *</label>
+          <input type="text" id="ev-name" class="name-input w-full" placeholder="Eid Prayer…" style="padding:10px 12px;" />
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">الاسم (AR)</label>
+          <input type="text" id="ev-name-ar" class="name-input w-full" placeholder="صلاة العيد…" style="padding:10px 12px;direction:rtl;" />
+        </div>
       </div>
-      <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="eventDesc">Description</label>
-        <textarea id="ev-desc" class="compose-input" placeholder="Details about the event…" rows="2" style="min-height:64px;"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Description (EN)</label>
+          <textarea id="ev-desc" class="compose-input" placeholder="Details…" rows="2" style="min-height:64px;"></textarea>
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">الوصف (AR)</label>
+          <textarea id="ev-desc-ar" class="compose-input" placeholder="التفاصيل…" rows="2" style="min-height:64px;direction:rtl;"></textarea>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div>
@@ -715,17 +727,35 @@
     <div class="modal-handle"></div>
     <h3 class="modal-title" data-i18n="addMosque">Add a Mosque</h3>
     <div style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="mosqueName">Mosque Name *</label>
-        <input type="text" id="m-name" class="name-input w-full" placeholder="Al-Masjid al-Haram" style="padding:10px 12px;" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Name (EN) *</label>
+          <input type="text" id="m-name" class="name-input w-full" placeholder="Al-Masjid al-Haram" style="padding:10px 12px;" />
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">الاسم (AR)</label>
+          <input type="text" id="m-name-ar" class="name-input w-full" placeholder="المسجد الحرام" style="padding:10px 12px;direction:rtl;" />
+        </div>
       </div>
-      <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="description">Description</label>
-        <textarea id="m-desc" class="compose-input" placeholder="Brief description…" rows="2" style="min-height:60px;"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Description (EN)</label>
+          <textarea id="m-desc" class="compose-input" placeholder="Brief description…" rows="2" style="min-height:60px;"></textarea>
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">الوصف (AR)</label>
+          <textarea id="m-desc-ar" class="compose-input" placeholder="وصف مختصر…" rows="2" style="min-height:60px;direction:rtl;"></textarea>
+        </div>
       </div>
-      <div>
-        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="infoAbout">Info / About</label>
-        <textarea id="m-info" class="compose-input" placeholder="Details, history, services…" rows="3" style="min-height:80px;"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">Info (EN)</label>
+          <textarea id="m-info" class="compose-input" placeholder="Details, history…" rows="3" style="min-height:80px;"></textarea>
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;">المعلومات (AR)</label>
+          <textarea id="m-info-ar" class="compose-input" placeholder="التفاصيل، التاريخ…" rows="3" style="min-height:80px;direction:rtl;"></textarea>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div>
@@ -876,7 +906,7 @@ function renderMosqueList() {
         }
       </div>
       <div class="mosque-card-body">
-        <h3>${escHtml(m.name)}</h3>
+        <h3>${escHtml(lang(m,'name'))}</h3>
         <div class="mosque-card-meta">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           ${m.latitude ? `${parseFloat(m.latitude).toFixed(3)}, ${parseFloat(m.longitude).toFixed(3)}` : 'Location TBD'}
@@ -947,20 +977,20 @@ async function loadMosqueDetail(id) {
         }
         <div class="hero-overlay">
           <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.75;margin-bottom:4px;" data-i18n="mosque">Mosque</div>
-          <h2>${escHtml(m.name)}</h2>
+          <h2>${escHtml(lang(m,'name'))}</h2>
         </div>
       </div>
 
-      ${m.description ? `
+      ${(m.description || m.description_ar) ? `
       <div class="detail-section">
         <div class="section-label" data-i18n="about">About</div>
-        <p style="line-height:1.7;color:var(--ink-2);">${escHtml(m.description)}</p>
+        <p style="line-height:1.7;color:var(--ink-2);">${escHtml(lang(m,'description'))}</p>
       </div>` : ''}
 
-      ${m.info ? `
+      ${(m.info || m.info_ar) ? `
       <div class="detail-section">
         <div class="section-label" data-i18n="information">Information</div>
-        <p style="line-height:1.7;color:var(--ink-2);white-space:pre-line;">${escHtml(m.info)}</p>
+        <p style="line-height:1.7;color:var(--ink-2);white-space:pre-line;">${escHtml(lang(m,'info'))}</p>
       </div>` : ''}
 
       <div class="detail-section">
@@ -1052,9 +1082,9 @@ function renderEvents(events, mosqueId) {
         <div class="day">${from.day}</div>
       </div>
       <div class="event-info">
-        <h4>${escHtml(ev.name)}</h4>
+        <h4>${escHtml(lang(ev,'name'))}</h4>
         ${dateRange ? `<p style="color:var(--teal);font-size:0.78rem;font-weight:500;margin-bottom:3px;">${escHtml(dateRange)}</p>` : ''}
-        ${ev.description ? `<p>${escHtml(ev.description)}</p>` : ''}
+        ${(ev.description||ev.description_ar) ? `<p>${escHtml(lang(ev,'description'))}</p>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1103,11 +1133,13 @@ function renderDiscussFeed(msgs, replace = false) {
     const div = document.createElement('div');
     div.className = 'message-item';
     const initials = (msg.author || 'A').charAt(0).toUpperCase();
+    const displayAuthor  = lang(msg,'author')  || msg.author  || 'Anonymous';
+    const displayMessage = lang(msg,'message') || msg.message || '';
     div.innerHTML = `
       <div class="avatar" style="background:${authorColor(msg.author)}">${initials}</div>
       <div class="message-bubble">
-        <div class="message-author">${escHtml(msg.author || 'Anonymous')}</div>
-        <div class="message-text">${escHtml(msg.message)}</div>
+        <div class="message-author">${escHtml(displayAuthor)}</div>
+        <div class="message-text">${escHtml(displayMessage)}</div>
         <div class="message-time">${timeAgo(msg.created_at)}</div>
       </div>`;
     feed.appendChild(div);
@@ -1124,9 +1156,19 @@ async function postMessage() {
   if (!msg) { showToast(t('writeFirst'), 'error'); return; }
 
   try {
+    // Send Arabic fields too if we're in Arabic mode
+    const msgAr     = currentLang === 'ar' ? msg    : null;
+    const authorAr  = currentLang === 'ar' ? author : null;
+    const msgEn     = currentLang === 'ar' ? null   : msg;
+    const authorEn  = currentLang === 'ar' ? null   : author;
     await apiFetch('/api/discuss', {
       method: 'POST',
-      body: JSON.stringify({ author, message: msg })
+      body: JSON.stringify({
+        author:     authorEn || author,
+        author_ar:  authorAr,
+        message:    msgEn    || msg,
+        message_ar: msgAr,
+      })
     });
     document.getElementById('compose-message').value = '';
     showToast(t('postSuccess'), 'success');
@@ -1140,7 +1182,7 @@ async function postMessage() {
       <div class="message-bubble">
         <div class="message-author">${escHtml(author)}</div>
         <div class="message-text">${escHtml(msg)}</div>
-        <div class="message-time">Just now</div>
+        <div class="message-time">${t('justNow')}</div>
       </div>`;
     feed.prepend(div);
   } catch(e) {
@@ -1287,11 +1329,14 @@ async function submitMosque() {
       method: 'POST',
       body: JSON.stringify({
         name,
-        description: document.getElementById('m-desc').value.trim(),
-        info: document.getElementById('m-info').value.trim(),
-        latitude: parseFloat(document.getElementById('m-lat').value) || null,
-        longitude: parseFloat(document.getElementById('m-lng').value) || null,
-        date_constructed: document.getElementById('m-year').value.trim() || null
+        name_ar:        document.getElementById('m-name-ar')?.value.trim() || null,
+        description:    document.getElementById('m-desc').value.trim()    || null,
+        description_ar: document.getElementById('m-desc-ar')?.value.trim() || null,
+        info:           document.getElementById('m-info').value.trim()    || null,
+        info_ar:        document.getElementById('m-info-ar')?.value.trim() || null,
+        latitude:       parseFloat(document.getElementById('m-lat').value)  || null,
+        longitude:      parseFloat(document.getElementById('m-lng').value) || null,
+        date_constructed: document.getElementById('m-year').value.trim()  || null,
       })
     });
     closeMosqueModal();
@@ -1356,7 +1401,9 @@ function showToast(msg, type='') {
 function openEventModal(mosqueId) {
   state.eventMosqueId = mosqueId;
   document.getElementById('ev-name').value = '';
+  document.getElementById('ev-name-ar').value = '';
   document.getElementById('ev-desc').value = '';
+  document.getElementById('ev-desc-ar').value = '';
   document.getElementById('ev-from').value = '';
   document.getElementById('ev-to').value = '';
   document.getElementById('event-modal').classList.add('open');
@@ -1377,9 +1424,11 @@ async function submitEvent() {
     await apiFetch('/api/events', {
       method: 'POST',
       body: JSON.stringify({
-        mosque_id:   state.eventMosqueId,
+        mosque_id:      state.eventMosqueId,
         name,
-        description: document.getElementById('ev-desc').value.trim() || null,
+        name_ar:        document.getElementById('ev-name-ar')?.value.trim() || null,
+        description:    document.getElementById('ev-desc').value.trim()    || null,
+        description_ar: document.getElementById('ev-desc-ar')?.value.trim() || null,
         from_date,
         to_date,
       })
@@ -1532,6 +1581,17 @@ let currentLang = localStorage.getItem('masjid_lang') || 'en';
 
 function t(key) {
   return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+}
+
+// Return the correct language field from a DB row.
+// e.g. lang(row,'name') → row.name_ar (Arabic) or row.name (English)
+function lang(row, field) {
+  if (!row) return '';
+  if (currentLang === 'ar') {
+    const ar = row[field + '_ar'];
+    if (ar && ar.trim()) return ar.trim();
+  }
+  return row[field] || '';
 }
 
 function applyLanguage(rerender = false) {

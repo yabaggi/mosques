@@ -124,9 +124,10 @@ async function getMosques(env, url) {
     stmt = env.DB.prepare(
       `SELECT m.*, (SELECT COUNT(*) FROM imgs WHERE mosque_id = m.id) > 0 AS has_image
        FROM mosques m
-       WHERE m.name LIKE ? OR m.description LIKE ?
+       WHERE m.name LIKE ? OR m.name_ar LIKE ?
+          OR m.description LIKE ? OR m.description_ar LIKE ?
        ORDER BY m.name`
-    ).bind(`%${q}%`, `%${q}%`);
+    ).bind(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
   } else {
     stmt = env.DB.prepare(
       `SELECT m.*, (SELECT COUNT(*) FROM imgs WHERE mosque_id = m.id) > 0 AS has_image
@@ -147,14 +148,19 @@ async function getMosque(env, id) {
 
 async function postMosque(env, request) {
   const body = await request.json();
-  const { name, description, info, latitude, longitude, date_constructed } = body;
+  const { name, name_ar, description, description_ar, info, info_ar,
+          latitude, longitude, date_constructed } = body;
   if (!name?.trim()) return err('name is required');
 
   const result = await env.DB.prepare(
-    `INSERT INTO mosques (name, description, info, latitude, longitude, date_constructed, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+    `INSERT INTO mosques
+       (name, name_ar, description, description_ar, info, info_ar,
+        latitude, longitude, date_constructed, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
   ).bind(
-    name.trim(), description || null, info || null,
+    name.trim(), name_ar?.trim() || null,
+    description || null, description_ar || null,
+    info || null, info_ar || null,
     latitude || null, longitude || null, date_constructed || null
   ).run();
 
@@ -177,13 +183,18 @@ async function getEvents(env, url) {
 
 async function postEvent(env, request) {
   const body = await request.json();
-  const { mosque_id, name, description, from_date, to_date } = body;
+  const { mosque_id, name, name_ar, description, description_ar, from_date, to_date } = body;
   if (!mosque_id || !name) return err('mosque_id and name required');
 
   const result = await env.DB.prepare(
-    `INSERT INTO events (mosque_id, name, description, from_date, to_date, created_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`
-  ).bind(mosque_id, name.trim(), description || null, from_date || null, to_date || null).run();
+    `INSERT INTO events
+       (mosque_id, name, name_ar, description, description_ar, from_date, to_date, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+  ).bind(
+    mosque_id, name.trim(), name_ar?.trim() || null,
+    description || null, description_ar || null,
+    from_date || null, to_date || null
+  ).run();
 
   return json({ success: true, id: result.meta.last_row_id }, 201);
 }
@@ -328,7 +339,7 @@ async function getDiscuss(env, url) {
   const offset = page * limit;
 
   const { results } = await env.DB.prepare(
-    `SELECT id, author, message, created_at FROM discuss
+    `SELECT id, author, author_ar, message, message_ar, created_at FROM discuss
      ORDER BY created_at DESC
      LIMIT ? OFFSET ?`
   ).bind(limit, offset).all();
@@ -348,14 +359,20 @@ async function getDiscuss(env, url) {
 
 async function postDiscuss(env, request) {
   const body = await request.json();
-  const { author, message } = body;
+  const { author, author_ar, message, message_ar } = body;
   if (!message?.trim()) return err('message is required');
   if (message.length > 2000) return err('message too long (max 2000 chars)');
   if ((author || '').length > 100) return err('author name too long');
 
   const result = await env.DB.prepare(
-    `INSERT INTO discuss (author, message, created_at) VALUES (?, ?, datetime('now'))`
-  ).bind((author || 'Anonymous').trim(), message.trim()).run();
+    `INSERT INTO discuss (author, author_ar, message, message_ar, created_at)
+     VALUES (?, ?, ?, ?, datetime('now'))`
+  ).bind(
+    (author || 'Anonymous').trim(),
+    author_ar?.trim() || null,
+    message.trim(),
+    message_ar?.trim() || null
+  ).run();
 
   return json({ success: true, id: result.meta.last_row_id }, 201);
 }
