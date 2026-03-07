@@ -676,6 +676,39 @@
   </div>
 </div>
 
+
+<!-- ─── ADD EVENT MODAL ─── -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title" data-i18n="addEvent">Add Event</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="eventName">Event Name *</label>
+        <input type="text" id="ev-name" class="name-input w-full" placeholder="Eid Prayer, Quran Class…" style="padding:10px 12px;" />
+      </div>
+      <div>
+        <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="eventDesc">Description</label>
+        <textarea id="ev-desc" class="compose-input" placeholder="Details about the event…" rows="2" style="min-height:64px;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="fromDate">From Date</label>
+          <input type="date" id="ev-from" class="name-input w-full" style="padding:10px 12px;" />
+        </div>
+        <div>
+          <label class="text-sm font-medium" style="display:block;margin-bottom:6px;" data-i18n="toDate">To Date</label>
+          <input type="date" id="ev-to" class="name-input w-full" style="padding:10px 12px;" />
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-outline w-full" onclick="closeEventModal()" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary w-full" onclick="submitEvent()" data-i18n="addEvent">Add Event</button>
+    </div>
+  </div>
+</div>
+
 <!-- ─── ADD MOSQUE MODAL ─── -->
 <div class="modal-overlay" id="mosque-modal">
   <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
@@ -746,6 +779,7 @@ let state = {
   uploadMosqueId: null,
   leafletMap: null,
   detailMap: null,
+  eventMosqueId: null,
 };
 
 // ═══════════════════════════════════════════════════════
@@ -952,7 +986,10 @@ async function loadMosqueDetail(id) {
       </div>
 
       <div class="detail-section">
-        <div class="section-label" data-i18n="upcomingEvents">Upcoming Events</div>
+        <div class="flex items-center justify-between" style="margin-bottom:12px;">
+          <div class="section-label" style="margin-bottom:0;" data-i18n="upcomingEvents">Upcoming Events</div>
+          <button class="btn btn-primary btn-sm" onclick="openEventModal(${m.id})">+ ${t('addEvent')}</button>
+        </div>
         ${renderEvents(events.events || [], m.id)}
       </div>
     `;
@@ -982,17 +1019,42 @@ function renderGallery(images) {
     </div>`).join('')}</div>`;
 }
 
+function formatEventDate(dateStr) {
+  if (!dateStr) return { month: '—', day: '—', full: '' };
+  const d = new Date(dateStr);
+  if (isNaN(d)) return { month: '—', day: '—', full: dateStr };
+  const locale = currentLang === 'ar' ? 'ar-SA' : 'en';
+  return {
+    month: d.toLocaleString(locale, { month: 'short' }).toUpperCase(),
+    day: d.getDate(),
+    full: d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+  };
+}
+
 function renderEvents(events, mosqueId) {
-  if (!events.length) return `<div style="text-align:center;padding:24px;color:var(--muted);">No upcoming events.</div>`;
+  if (!events.length) return `
+    <div style="text-align:center;padding:32px;color:var(--muted);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" style="color:var(--sand-2);display:block;margin:0 auto 8px;">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span data-i18n="noEvents">${t('noEvents')}</span>
+    </div>`;
   return events.map(ev => {
-    const d = new Date(ev.date);
-    const month = d.toLocaleString('en', {month:'short'}).toUpperCase();
-    const day = d.getDate();
+    const from = formatEventDate(ev.from_date);
+    const to   = formatEventDate(ev.to_date);
+    const hasDuration = ev.to_date && ev.to_date !== ev.from_date;
+    const dateRange = hasDuration
+      ? `${from.full} — ${to.full}`
+      : from.full;
     return `<div class="event-item">
-      <div class="event-date-box"><div class="month">${month}</div><div class="day">${day}</div></div>
+      <div class="event-date-box">
+        <div class="month">${from.month}</div>
+        <div class="day">${from.day}</div>
+      </div>
       <div class="event-info">
         <h4>${escHtml(ev.name)}</h4>
-        <p>${escHtml(ev.description || '')}</p>
+        ${dateRange ? `<p style="color:var(--teal);font-size:0.78rem;font-weight:500;margin-bottom:3px;">${escHtml(dateRange)}</p>` : ''}
+        ${ev.description ? `<p>${escHtml(ev.description)}</p>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1287,6 +1349,49 @@ function showToast(msg, type='') {
 }
 
 
+
+// ═══════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════
+function openEventModal(mosqueId) {
+  state.eventMosqueId = mosqueId;
+  document.getElementById('ev-name').value = '';
+  document.getElementById('ev-desc').value = '';
+  document.getElementById('ev-from').value = '';
+  document.getElementById('ev-to').value = '';
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+async function submitEvent() {
+  const name = document.getElementById('ev-name').value.trim();
+  if (!name) { showToast(t('nameRequired'), 'error'); return; }
+
+  const from_date = document.getElementById('ev-from').value || null;
+  const to_date   = document.getElementById('ev-to').value || null;
+
+  try {
+    await apiFetch('/api/events', {
+      method: 'POST',
+      body: JSON.stringify({
+        mosque_id:   state.eventMosqueId,
+        name,
+        description: document.getElementById('ev-desc').value.trim() || null,
+        from_date,
+        to_date,
+      })
+    });
+    closeEventModal();
+    showToast(t('eventAdded'), 'success');
+    loadMosqueDetail(state.eventMosqueId);
+  } catch(e) {
+    showToast(t('eventFailed'), 'error');
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // i18n — English / Arabic Toggle
 // ═══════════════════════════════════════════════════════
@@ -1331,6 +1436,15 @@ const TRANSLATIONS = {
     noPhotos: 'No photos yet. Be the first to contribute!',
     noEvents: 'No upcoming events.',
     noMosques: 'No mosques found.',
+    addEvent: 'Add Event',
+    eventName: 'Event Name *',
+    eventDesc: 'Description',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+    eventAdded: 'Event added!',
+    eventFailed: 'Failed to add event.',
+    allEvents: 'All events',
+    upcomingEvents: 'Upcoming Events',
     compressing: 'Compressing…',
     uploading: 'Uploading…',
     uploadSuccess: 'Photo uploaded successfully!',
@@ -1387,6 +1501,15 @@ const TRANSLATIONS = {
     noPhotos: 'لا توجد صور بعد. كن أول من يساهم!',
     noEvents: 'لا توجد فعاليات قادمة.',
     noMosques: 'لم يتم العثور على مساجد.',
+    addEvent: 'إضافة فعالية',
+    eventName: 'اسم الفعالية *',
+    eventDesc: 'الوصف',
+    fromDate: 'من تاريخ',
+    toDate: 'إلى تاريخ',
+    eventAdded: 'تمت إضافة الفعالية!',
+    eventFailed: 'فشل إضافة الفعالية.',
+    allEvents: 'كل الفعاليات',
+    upcomingEvents: 'الفعاليات القادمة',
     compressing: 'جارٍ الضغط…',
     uploading: 'جارٍ الرفع…',
     uploadSuccess: 'تم رفع الصورة بنجاح!',

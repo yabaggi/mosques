@@ -169,7 +169,7 @@ async function getEvents(env, url) {
   if (!mosque_id) return err('mosque_id required');
 
   const { results } = await env.DB.prepare(
-    `SELECT * FROM events WHERE mosque_id = ? ORDER BY date ASC`
+    `SELECT * FROM events WHERE mosque_id = ? ORDER BY from_date ASC`
   ).bind(mosque_id).all();
 
   return json({ events: results });
@@ -177,13 +177,13 @@ async function getEvents(env, url) {
 
 async function postEvent(env, request) {
   const body = await request.json();
-  const { mosque_id, name, description, date } = body;
+  const { mosque_id, name, description, from_date, to_date } = body;
   if (!mosque_id || !name) return err('mosque_id and name required');
 
   const result = await env.DB.prepare(
-    `INSERT INTO events (mosque_id, name, description, date, created_at)
-     VALUES (?, ?, ?, ?, datetime('now'))`
-  ).bind(mosque_id, name.trim(), description || null, date || null).run();
+    `INSERT INTO events (mosque_id, name, description, from_date, to_date, created_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))`
+  ).bind(mosque_id, name.trim(), description || null, from_date || null, to_date || null).run();
 
   return json({ success: true, id: result.meta.last_row_id }, 201);
 }
